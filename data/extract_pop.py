@@ -9,6 +9,25 @@ def create_population_dict():
     # Initialize DuckDB
     df = duckdb.connect()
 
+    # Install the 'excel' extension (only needed once)
+    try:
+        df.execute("INSTALL 'excel';")
+        print('Excel extension installed successfully.')
+    except duckdb.CatalogException as e:
+        if 'already installed' in str(e).lower():
+            print('Excel extension is already installed.')
+        else:
+            print(f'Error installing excel extension: {e}')
+            raise e
+
+    # Load the 'excel' extension
+    try:
+        df.execute("LOAD 'excel';")
+        print('Excel extension loaded successfully.')
+    except duckdb.CatalogException as e:
+        print(f'Error loading excel extension: {e}')
+        raise e
+
 
     # Define the path to your Excel file
     excel_file_path = Path('estimativa_dou_2024.xls').resolve()
@@ -23,7 +42,7 @@ def create_population_dict():
         df.execute(
             f"""
             CREATE OR REPLACE TABLE states AS
-            SELECT * FROM read_excel('{excel_file_str}', sheet='BRASIL E UFs', header=True) LIMIT 28
+            SELECT * FROM read_excel('{excel_file_str}', sheetname='BRASIL E UFs', header=True) LIMIT 28
         """
         )
         print("Table 'states' created successfully.")
@@ -36,7 +55,7 @@ def create_population_dict():
         df.execute(
             f"""
             CREATE OR REPLACE TABLE cities AS
-            SELECT * FROM read_excel('{excel_file_str}', sheet='MUNICÍPIOS', header=True)
+            SELECT * FROM read_excel('{excel_file_str}', sheetname='MUNICÍPIOS', header=True)
         """
         )
         print("Table 'cities' created successfully.")
