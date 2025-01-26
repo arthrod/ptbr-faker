@@ -3,30 +3,13 @@ from pathlib import Path
 
 import duckdb
 import ibis  # noqa: F401
+import pandas as pd
 
 
 def create_population_dict():
     # Initialize DuckDB
     df = duckdb.connect()
 
-    # Install the 'excel' extension (only needed once)
-    try:
-        df.execute("INSTALL 'excel';")
-        print('Excel extension installed successfully.')
-    except duckdb.CatalogException as e:
-        if 'already installed' in str(e).lower():
-            print('Excel extension is already installed.')
-        else:
-            print(f'Error installing excel extension: {e}')
-            raise e
-
-    # Load the 'excel' extension
-    try:
-        df.execute("LOAD 'excel';")
-        print('Excel extension loaded successfully.')
-    except duckdb.CatalogException as e:
-        print(f'Error loading excel extension: {e}')
-        raise e
 
 
     # Define the path to your Excel file
@@ -37,30 +20,22 @@ def create_population_dict():
     excel_file_str = str(excel_file_path)
     print(f'Using Excel file at: {excel_file_str}')
 
-    # Create 'states' table from Excel sheet using 'read_excel'
+    # Read Excel sheets into pandas DataFrames
     try:
-        df.execute(
-            f"""
-            CREATE OR REPLACE TABLE states AS
-            SELECT * FROM read_excel('{excel_file_str}', sheetname='BRASIL E UFs', header=True) LIMIT 28
-        """
-        )
-        print("Table 'states' created successfully.")
-    except duckdb.CatalogException as e:
-        print(f"Error creating 'states' table: {e}")
+        states_df = pd.read_excel(excel_file_str, sheet_name='BRASIL E UFs', header=0)
+        cities_df = pd.read_excel(excel_file_str, sheet_name='MUNICÍPIOS', header=0)
+        print("Excel sheets read into pandas DataFrames successfully.")
+    except Exception as e:
+        print(f"Error reading excel file: {e}")
         raise e
 
-    # Create 'cities' table from Excel sheet using 'read_excel'
+    # Register pandas DataFrames as tables in DuckDB
     try:
-        df.execute(
-            f"""
-            CREATE OR REPLACE TABLE cities AS
-            SELECT * FROM read_excel('{excel_file_str}', sheetname='MUNICÍPIOS', header=True)
-        """
-        )
-        print("Table 'cities' created successfully.")
-    except duckdb.CatalogException as e:
-        print(f"Error creating 'cities' table: {e}")
+        df.register('states', states_df)
+        df.register('cities', cities_df)
+        print("pandas DataFrames registered as tables in DuckDB successfully.")
+    except Exception as e:
+        print(f"Error registering DataFrames: {e}")
         raise e
 
     # Initialize the result dictionary
