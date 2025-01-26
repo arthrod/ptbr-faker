@@ -1,13 +1,37 @@
 import json
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal, getcontext
 from pathlib import Path
 
 import duckdb
 
+# Set maximum precision for our calculations
+getcontext().prec = 50
+
+
+def calculate_percentage(value: int, total: int) -> Decimal:
+    """
+    Calculate percentage with maximum precision, never returning absolute zero.
+
+    Args:
+        value: The count for a specific name and period
+        total: The total count for that period
+
+    Returns:
+        Decimal: The calculated percentage with maximum precision
+    """
+    if total == 0 or value == 0:
+        return Decimal('0.000000000000000000001')  # Extremely small but non-zero
+
+    # Convert to Decimal with maximum precision and calculate
+    dec_value = Decimal(str(value))
+    dec_total = Decimal(str(total))
+    return dec_value / dec_total
+
 
 def process_population_data(json_file: str, csv_file: str) -> None:
     """
-    Process population data from CSV and update JSON file with common names statistics using DuckDB.
+    Process population data from CSV and update JSON file with common names statistics.
+    Uses DuckDB only for data loading, handles calculations in Python.
 
     Args:
         json_file: Path to the population JSON file
@@ -17,7 +41,7 @@ def process_population_data(json_file: str, csv_file: str) -> None:
         # Initialize DuckDB connection
         con = duckdb.connect(':memory:')
 
-        # Create and populate the names table with proper schema
+        # Create names table
         create_table_sql = """
         CREATE TABLE names (
             Nome VARCHAR,
@@ -34,7 +58,7 @@ def process_population_data(json_file: str, csv_file: str) -> None:
         """
         con.execute(create_table_sql)
 
-        # Load CSV data with proper handling of empty values
+        # Load CSV data
         copy_sql = f"""
         COPY names FROM '{csv_file}'
         WITH (
@@ -46,31 +70,8 @@ def process_population_data(json_file: str, csv_file: str) -> None:
         """
         con.execute(copy_sql)
 
-        # Calculate totals for each period
-        totals_sql = """
-        SELECT 
-            COALESCE(SUM(COALESCE(ate1930, 0)), 0) as total_ate1930,
-            COALESCE(SUM(COALESCE(ate1940, 0)), 0) as total_ate1940,
-            COALESCE(SUM(COALESCE(ate1950, 0)), 0) as total_ate1950,
-            COALESCE(SUM(COALESCE(ate1960, 0)), 0) as total_ate1960,
-            COALESCE(SUM(COALESCE(ate1970, 0)), 0) as total_ate1970,
-            COALESCE(SUM(COALESCE(ate1980, 0)), 0) as total_ate1980,
-            COALESCE(SUM(COALESCE(ate1990, 0)), 0) as total_ate1990,
-            COALESCE(SUM(COALESCE(ate2000, 0)), 0) as total_ate2000,
-            COALESCE(SUM(COALESCE(ate2010, 0)), 0) as total_ate2010
-        FROM names;
-        """
-        totals = con.execute(totals_sql).fetchone()
-
-        # Read the existing JSON file
-        with Path(json_file).open('r', encoding='utf-8') as f:
-            population_data = json.load(f)
-
-        # Initialize common_names with totals
-        common_names = {f'total_ate{year}': int(totals[i]) for i, year in enumerate(range(1930, 2020, 10))}
-
-        # Process each name with its values and percentages
-        names_sql = """
+        # Get all data at once
+        data_sql = """
         SELECT 
             Nome,
             COALESCE(ate1930, 0) as ate1930,
@@ -85,27 +86,42 @@ def process_population_data(json_file: str, csv_file: str) -> None:
         FROM names
         ORDER BY Nome;
         """
+        all_data = con.execute(data_sql).fetchall()
 
-        names_data = con.execute(names_sql).fetchall()
+        # Read JSON file
+        with Path(json_file).open('r', encoding='utf-8') as f:
+            population_data = json.load(f)
 
-        # Process each name and calculate percentages
-        for row in names_data:
+        # Initialize common_names dictionary
+        common_names = {}
+
+        # Calculate totals first (everything in Python now)
+        period_totals = {year: 0 for year in range(1930, 2020, 10)}
+
+        # First pass: calculate totals
+        for row in all_data:
+            for idx, year in enumerate(range(1930, 2020, 10)):
+                period_totals[year] += int(row[idx + 1])  # +1 because first col is Nome
+
+        # Add totals to common_names
+        for year, total in period_totals.items():
+            common_names[f'total_ate{year}'] = total
+
+        # Second pass: process each name
+        for row in all_data:
             name = row[0]
             name_data = {}
 
-            for i, year in enumerate(range(1930, 2020, 10)):
-                value = int(row[i + 1])  # +1 because first column is Nome
-                total = totals[i]
-
-                # Calculate percentage with high precision
-                if total > 0:
-                    percentage = Decimal(value) / Decimal(total)
-                    percentage = percentage.quantize(Decimal('0.00001'), rounding=ROUND_HALF_UP)
-                else:
-                    percentage = Decimal('0.00000')
-
+            # Process each period for this name
+            for idx, year in enumerate(range(1930, 2020, 10)):
+                value = int(row[idx + 1])
                 period = f'ate{year}'
+
+                # Store the raw value
                 name_data[period] = value
+
+                # Calculate and store the percentage
+                percentage = calculate_percentage(value, period_totals[year])
                 name_data[f'appr_percentage_{period}'] = float(percentage)
 
             common_names[name] = name_data
@@ -113,7 +129,7 @@ def process_population_data(json_file: str, csv_file: str) -> None:
         # Update the JSON data
         population_data['common_names'] = common_names
 
-        # Write back to JSON file with proper formatting
+        # Write back to JSON
         with Path(json_file).open('w', encoding='utf-8') as f:
             json.dump(population_data, f, ensure_ascii=False, indent=2)
 
