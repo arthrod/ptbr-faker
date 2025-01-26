@@ -3,7 +3,6 @@ from pathlib import Path
 
 import duckdb
 import ibis  # noqa: F401
-import pandas as pd
 
 
 def create_population_dict():
@@ -37,28 +36,36 @@ def create_population_dict():
     excel_file_str = str(excel_file_path)
     print(f'Using Excel file at: {excel_file_str}')
 
-    # Load Excel sheets into pandas DataFrames
+    # Create 'states' table from Excel sheet using 'read_excel'
     try:
-        states_df = pd.read_excel(excel_file_str, sheet_name='BRASIL E UFs', header=0, nrows=28)
-        cities_df = pd.read_excel(excel_file_str, sheet_name='MUNICÍPIOS', header=0)
-        print("Excel file loaded into pandas DataFrames.")
-    except Exception as e:
-        print(f"Error loading excel file into pandas: {e}")
-        raise e
-
-    # Create 'states' table from pandas DataFrame
-    try:
-        df.register('states_view', states_df)
-        df.execute("CREATE OR REPLACE TABLE states AS SELECT * FROM states_view")
+        df.execute(
+            f"""
+            CREATE OR REPLACE TABLE states AS
+            SELECT * FROM read_excel(
+                '{excel_file_str}',
+                sheetname='BRASIL E UFs',
+                header=true
+            )
+            LIMIT 28
+        """
+        )
         print("Table 'states' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'states' table: {e}")
         raise e
 
-    # Create 'cities' table from pandas DataFrame
+    # Create 'cities' table from Excel sheet using 'read_excel'
     try:
-        df.register('cities_view', cities_df)
-        df.execute("CREATE OR REPLACE TABLE cities AS SELECT * FROM cities_view")
+        df.execute(
+            f"""
+            CREATE OR REPLACE TABLE cities AS
+            SELECT * FROM read_excel(
+                '{excel_file_str}',
+                sheetname='MUNICÍPIOS',
+                header=true
+            )
+        """
+        )
         print("Table 'cities' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'cities' table: {e}")
