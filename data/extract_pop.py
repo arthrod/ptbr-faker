@@ -1,4 +1,4 @@
-# AI!I need to extract the data from excel using duckdb. I got this error, make this extraction happen! An error occurred during population data extraction: HTTP Error: Failed to download extension "st_read" at URL "http://extensions.duckdb.org/v1.1.3/osx_arm64/st_read.duckdb_extension.gz" (HTTP 403) Candidate extensions: "postgres", "postgres_scanner", "substrait", "sqlite_scanner", "spatial" HELP!!
+# AI!I need to extract the data from excel using duckdb. I got this error, make this extraction happen! An error occurred during population data extraction: HTTP Error: Failed to download extension "st_read" at URL "http://extensions.duckdb.org/v1.1.3/osx_arm64/st_read.duckdb_extension.gz" (HTTP 403) Candidate extensions: "postgres", "postgres_scanner", "substrait", "sqlite_scanner", "spatial" HELP!! there is no read_excel function in duckdb.
 
 import json
 from pathlib import Path
