@@ -1,3 +1,4 @@
+# make sure you implement exception for São Paulo, Brasília e Nova Iguaçu
 import json
 import random
 from pathlib import Path
