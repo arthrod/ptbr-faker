@@ -1,10 +1,9 @@
-# AI!I need to extract the data from excel using duckdb. I got this error, make this extraction happen! An error occurred during population data extraction: HTTP Error: Failed to download extension "st_read" at URL "http://extensions.duckdb.org/v1.1.3/osx_arm64/st_read.duckdb_extension.gz" (HTTP 403) Candidate extensions: "postgres", "postgres_scanner", "substrait", "sqlite_scanner", "spatial" HELP!! there is no read_excel function in duckdb.
-
 import json
 from pathlib import Path
 
 import duckdb
 import ibis  # noqa: F401
+import pandas as pd
 
 
 def create_population_dict():
@@ -31,43 +30,35 @@ def create_population_dict():
         raise e
 
     # Define the path to your Excel file
-    excel_file_path = Path('estimativa_dou_2024.xls').resolve()  # Ensure the file is in the current directory or provide the absolute path
+    excel_file_path = Path('estimativa_dou_2024.xls').resolve()
     if not excel_file_path.exists():
         print(f'Error: Excel file not found at {excel_file_path}')
         raise FileNotFoundError(f'Excel file not found at {excel_file_path}')
     excel_file_str = str(excel_file_path)
     print(f'Using Excel file at: {excel_file_str}')
 
-    # Create 'states' table from Excel sheet using 'read_excel'
+    # Load Excel sheets into pandas DataFrames
     try:
-        df.execute(
-            f"""
-            CREATE OR REPLACE TABLE states AS
-            SELECT * FROM read_excel(
-                '{excel_file_str}',
-                sheetname='BRASIL E UFs',
-                header=true
-            )
-            LIMIT 28
-        """
-        )
+        states_df = pd.read_excel(excel_file_str, sheet_name='BRASIL E UFs', header=0, nrows=28)
+        cities_df = pd.read_excel(excel_file_str, sheet_name='MUNICÍPIOS', header=0)
+        print("Excel file loaded into pandas DataFrames.")
+    except Exception as e:
+        print(f"Error loading excel file into pandas: {e}")
+        raise e
+
+    # Create 'states' table from pandas DataFrame
+    try:
+        df.register('states_view', states_df)
+        df.execute("CREATE OR REPLACE TABLE states AS SELECT * FROM states_view")
         print("Table 'states' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'states' table: {e}")
         raise e
 
-    # Create 'cities' table from Excel sheet using 'read_excel'
+    # Create 'cities' table from pandas DataFrame
     try:
-        df.execute(
-            f"""
-            CREATE OR REPLACE TABLE cities AS
-            SELECT * FROM read_excel(
-                '{excel_file_str}',
-                sheetname='MUNICÍPIOS',
-                header=true
-            )
-        """
-        )
+        df.register('cities_view', cities_df)
+        df.execute("CREATE OR REPLACE TABLE cities AS SELECT * FROM cities_view")
         print("Table 'cities' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'cities' table: {e}")
