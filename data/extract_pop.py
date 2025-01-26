@@ -2,78 +2,72 @@ import json
 from pathlib import Path
 
 import duckdb
-import ibis  # noqa: F401
-import pandas as pd
 
 
 def create_population_dict():
-    # Initialize DuckDB
     df = duckdb.connect()
+    df.execute("INSTALL 'spatial';")
+    df.execute("LOAD 'spatial';")
 
-
-
-    # Define the path to your Excel file
-    excel_file_path = Path('estimativa_dou_2024.xls').resolve()
-    if not excel_file_path.exists():
-        print(f'Error: Excel file not found at {excel_file_path}')
-        raise FileNotFoundError(f'Excel file not found at {excel_file_path}')
+    excel_file_path = Path('estimativa_dou_2024.xlsx').resolve()
     excel_file_str = str(excel_file_path)
-    print(f'Using Excel file at: {excel_file_str}')
 
-    # Read Excel sheets into pandas DataFrames
-    try:
-        states_df = pd.read_excel(excel_file_str, sheet_name='BRASIL E UFs', header=0)
-        cities_df = pd.read_excel(excel_file_str, sheet_name='MUNICÍPIOS', header=0)
-        print("Excel sheets read into pandas DataFrames successfully.")
-    except Exception as e:
-        print(f"Error reading excel file: {e}")
-        raise e
+    # Create states table - note we use the long column name from our test results
+    df.execute(f"""
+        CREATE OR REPLACE TABLE states AS 
+        SELECT 
+            "ESTIMATIVAS DA POPULAÇÃO RESIDENTE NO BRASIL E UNIDADES DA FEDERAÇÃO COM DATA DE REFERÊNCIA EM 1º DE JULHO DE 2024" as name,
+            CAST(Field2 AS BIGINT) as population
+        FROM ST_read(
+            '{excel_file_str}', 
+            layer='BRASIL E UFs',
+            open_options=['HEADERS=FORCE']
+        )
+        WHERE "ESTIMATIVAS DA POPULAÇÃO RESIDENTE NO BRASIL E UNIDADES DA FEDERAÇÃO COM DATA DE REFERÊNCIA EM 1º DE JULHO DE 2024" NOT IN (
+            'BRASIL E UNIDADES DA FEDERAÇÃO',
+            'Fonte: IBGE. Diretoria de Pesquisas - DPE -  Coordenação de População e Indicadores Sociais - COPIS.'
+        )
+        AND Field2 IS NOT NULL
+    """)
 
-    # Register pandas DataFrames as tables in DuckDB
-    try:
-        df.register('states', states_df)
-        df.register('cities', cities_df)
-        print("pandas DataFrames registered as tables in DuckDB successfully.")
-    except Exception as e:
-        print(f"Error registering DataFrames: {e}")
-        raise e
+    # Create cities table using Field1-Field5 as shown in test results
+    df.execute(f"""
+        CREATE OR REPLACE TABLE cities AS
+        SELECT 
+            Field1 as state_abbr,
+            Field2 as state_code,
+            Field3 as city_code,
+            Field4 as city_name,
+            CAST(Field5 AS BIGINT) as population
+        FROM ST_read(
+            '{excel_file_str}', 
+            layer='MUNICÍPIOS',
+            open_options=['HEADERS=FORCE']
+        )
+        WHERE Field1 NOT IN (
+            'ESTIMATIVAS DA POPULAÇÃO RESIDENTE NOS MUNICÍPIOS BRASILEIROS COM DATA DE REFERÊNCIA EM 1º DE JULHO DE 2024',
+            'UF'
+        )
+        AND Field1 IS NOT NULL
+    """)
 
-    # Initialize the result dictionary
-    result = {
-        'brasil': {},
-        'regions': {},
-        'states': {},
-        'cities': {},
-    }
+    result = {'brasil': {}, 'regions': {}, 'states': {}, 'cities': {}}
 
-    # Populate 'brasil' total population
-    try:
-        brasil_pop = df.execute("SELECT column2 FROM states WHERE column1='Brasil';").fetchone()[0]
-        result['brasil']['total_population'] = brasil_pop
-        print(f"'brasil' total population: {brasil_pop}")
-    except duckdb.CatalogException as e:
-        print(f"Error querying 'brasil' population: {e}")
-        raise e
-    except TypeError as e:
-        print(f"No data found for 'Brasil': {e}")
-        raise e
+    # Get Brasil total
+    brasil_pop = df.execute("SELECT population FROM states WHERE name = 'Brasil'").fetchone()[0]
+    result['brasil']['total_population'] = brasil_pop
 
-    # Add regions
+    # Get regions with same logic
     regions_query = """
-        SELECT column1 AS region, column2 AS population 
+        SELECT name as region, population 
         FROM states 
-        WHERE column1 IN ('Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste')
+        WHERE name IN ('Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste')
     """
-    try:
-        regions = df.execute(regions_query).fetchall()
-        for region, pop in regions:
-            result['regions'][region.lower()] = {'total_population_per_region': pop}
-        print('Regions added to result.')
-    except duckdb.CatalogException as e:
-        print(f'Error querying regions: {e}')
-        raise e
+    regions = df.execute(regions_query).fetchall()
+    for region, pop in regions:
+        result['regions'][region.lower()] = {'total_population_per_region': pop}
 
-    # Add states with mapping
+    # State mapping remains the same
     state_mapping = {
         'Rondônia': 'RO',
         'Acre': 'AC',
@@ -103,64 +97,56 @@ def create_population_dict():
         'Goiás': 'GO',
         'Distrito Federal': 'DF',
     }
+    abbr_to_state = {v: k for k, v in state_mapping.items()}
 
-    try:
-        total_pop = result['brasil']['total_population']
-    except KeyError as e:
-        print(f"KeyError accessing 'brasil' population: {e}")
-        raise e
-
+    # Process states first to get their populations
+    state_populations = {}
     states_query = """
-        SELECT column1, column2 
+        SELECT name, population 
         FROM states 
-        WHERE column1 NOT IN ('Brasil', 'Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste')
+        WHERE name NOT IN (
+            'Brasil', 'Norte', 'Nordeste', 'Sudeste', 'Sul', 'Centro-Oeste'
+        )
     """
 
-    try:
-        states = df.execute(states_query).fetchall()
-        for state, pop in states:
-            if state not in state_mapping:
-                print(f"Warning: State '{state}' not found in state_mapping.")
-                continue  # Skip or handle as needed
+    states = df.execute(states_query).fetchall()
+    for state, pop in states:
+        if state in state_mapping:
             result['states'][state] = {
                 'state_abbr': state_mapping[state],
                 'state_population': pop,
-                'population_percentage': round(float(pop) / total_pop * 100, 2),
+                'population_percentage': round(float(pop) / brasil_pop * 100, 2),
             }
-        print('States added to result.')
-    except duckdb.CatalogException as e:
-        print(f'Error querying states: {e}')
-        raise e
+            state_populations[state_mapping[state]] = pop
 
-    # Add cities
-    cities_query = 'SELECT * FROM cities'
-    try:
-        cities = df.execute(cities_query).fetchall()
-        for row in cities:
-            # Adjust indices based on actual column positions
-            if len(row) < 5:
-                print(f'Warning: Incomplete row data: {row}')
-                continue
-            city_name = row[3]
+    # Enhanced cities query with both state and national percentages
+    cities_query = """
+        SELECT 
+            state_abbr,
+            state_code,
+            city_code,
+            city_name,
+            population
+        FROM cities
+        ORDER BY state_abbr, city_name
+    """
+
+    cities = df.execute(cities_query).fetchall()
+    for state_abbr, state_code, city_code, city_name, pop in cities:
+        if state_abbr in abbr_to_state:
+            state_pop = state_populations[state_abbr]
             result['cities'][city_name] = {
-                'city_uf': row[0],
-                'uf_code': row[1],
-                'city_code': str(row[2]).zfill(5),
-                'city_population': row[4],
+                'city_uf': state_abbr,
+                'uf_code': state_code,
+                'city_code': str(city_code).zfill(5),
+                'city_population': pop,
+                'population_percentage_total': round(float(pop) / brasil_pop * 100, 4),
+                'population_percentage_state': round(float(pop) / state_pop * 100, 4),
             }
-        print('Cities added to result.')
-    except duckdb.CatalogException as e:
-        print(f'Error querying cities: {e}')
-        raise e
 
-    # Save to JSON file
-    try:
-        with Path('population_data.json').open('w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-        print("Result saved to 'population_data.json'.")
-    except Exception as e:
-        print(f'Error saving JSON file: {e}')
-        raise e
+    # Save to JSON with proper encoding
+    with Path('population_data_2024.json').open('w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
 
     return result
 
