@@ -169,6 +169,7 @@ dependencies = [
     { name = "duckdb" },
     { name = "ibis-framework", extra = ["duckdb"] },
     { name = "python-dotenv" },
+    { name = "rich" },
     { name = "tqdm" },
     { name = "typer" },
 ]
@@ -200,6 +201,7 @@ requires-dist = [
     { name = "pytest-timeout", marker = "extra == 'test'" },
     { name = "pytest-xdist", marker = "extra == 'test'" },
     { name = "python-dotenv" },
+    { name = "rich", specifier = ">=13.9.4" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "tqdm" },
     { name = "typer" },

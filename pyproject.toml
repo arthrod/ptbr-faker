@@ -7,7 +7,7 @@ requires-python = '>=3.12'
 keywords = ['xx', 'xx', 'xx', 'x x', 'xxx xx']
 dependencies = [
     'tqdm',
-    'typer',
+    "typer",
     'python-dotenv',
     #'aiosmtplib',
     #'aioimaplib',
@@ -26,6 +26,7 @@ dependencies = [
     #'pytz',
     "duckdb>=1.1.3",
     "ibis-framework[duckdb]",
+    "rich>=13.9.4",
 ]
 
 [project.optional-dependencies]
