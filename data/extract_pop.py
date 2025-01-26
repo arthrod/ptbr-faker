@@ -4,31 +4,11 @@ from pathlib import Path
 import duckdb
 import ibis  # noqa: F401
 
-# AI! I need to extract the data from excel using duckdb. I got this error, make this extraction happen! An error occurred during population data extraction: HTTP Error: Failed to download extension "st_read" at URL "http://extensions.duckdb.org/v1.1.3/osx_arm64/st_read.duckdb_extension.gz" (HTTP 403) Candidate extensions: "postgres", "postgres_scanner", "substrait", "sqlite_scanner", "spatial" HELP!! there is no read_excel function in duckdb.
-
 
 def create_population_dict():
-    # Initialize DuckDB and Spatial extension
+    # Initialize DuckDB
     df = duckdb.connect()
 
-    # Install the 'spatial' extension (only needed once)
-    try:
-        df.execute("INSTALL 'spatial';")
-        print('Spatial extension installed successfully.')
-    except duckdb.CatalogException as e:
-        if 'already installed' in str(e).lower():
-            print('Spatial extension is already installed.')
-        else:
-            print(f'Error installing spatial extension: {e}')
-            raise e
-
-    # Load the 'spatial' extension
-    try:
-        df.execute("LOAD 'spatial';")
-        print('Spatial extension loaded successfully.')
-    except duckdb.CatalogException as e:
-        print(f'Error loading spatial extension: {e}')
-        raise e
 
     # Define the path to your Excel file
     excel_file_path = Path('estimativa_dou_2024.xls').resolve()
@@ -43,12 +23,7 @@ def create_population_dict():
         df.execute(
             f"""
             CREATE OR REPLACE TABLE states AS
-            SELECT * FROM read_excel(
-                '{excel_file_str}',
-                sheetname='BRASIL E UFs',
-                header=true
-            )
-            LIMIT 28
+            SELECT * FROM read_excel('{excel_file_str}', sheet='BRASIL E UFs', header=True) LIMIT 28
         """
         )
         print("Table 'states' created successfully.")
@@ -61,11 +36,7 @@ def create_population_dict():
         df.execute(
             f"""
             CREATE OR REPLACE TABLE cities AS
-            SELECT * FROM read_excel(
-                '{excel_file_str}',
-                sheetname='MUNICÍPIOS',
-                header=true
-            )
+            SELECT * FROM read_excel('{excel_file_str}', sheet='MUNICÍPIOS', header=True)
         """
         )
         print("Table 'cities' created successfully.")
