@@ -15,7 +15,6 @@ def create_population_dict():
     try:
         df.execute("INSTALL 'spatial';")
         print('Spatial extension installed successfully.')
-        df.execute("INSTALL 'st_read';")
     except duckdb.CatalogException as e:
         if 'already installed' in str(e).lower():
             print('Spatial extension is already installed.')
@@ -27,22 +26,8 @@ def create_population_dict():
     try:
         df.execute("LOAD 'spatial';")
         print('Spatial extension loaded successfully.')
-        df.execute("LOAD 'st_read';")
     except duckdb.CatalogException as e:
         print(f'Error loading spatial extension: {e}')
-        raise e
-
-    # Verify that 'st_read' function is available
-    # Verify that 'st_read' function is available
-    try:
-        functions = df.execute("SELECT function_name FROM duckdb_functions() WHERE function_name = 'st_read';").fetchall()
-        if functions:
-            print("'st_read' function is available.")
-        else:
-            print("'st_read' function is NOT available. Please check the extension installation.")
-            raise Exception("'st_read' function not found after loading 'spatial' extension.")
-    except duckdb.CatalogException as e:
-        print(f"Error verifying 'st_read' function: {e}")
         raise e
 
     # Define the path to your Excel file
@@ -53,32 +38,36 @@ def create_population_dict():
     excel_file_str = str(excel_file_path)
     print(f'Using Excel file at: {excel_file_str}')
 
-    # Create 'states' table from Excel sheet using 'st_read'
+    # Create 'states' table from Excel sheet using 'read_excel'
     try:
-        df.execute(f"""
-            CREATE OR REPLACE TABLE states AS 
-            SELECT * FROM st_read(
-                '{excel_file_str}', 
-                layer='BRASIL E UFs', 
-                open_options=['HEADERS=FORCE']
+        df.execute(
+            f"""
+            CREATE OR REPLACE TABLE states AS
+            SELECT * FROM read_excel(
+                '{excel_file_str}',
+                sheetname='BRASIL E UFs',
+                header=true
             )
             LIMIT 28
-        """)
+        """
+        )
         print("Table 'states' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'states' table: {e}")
         raise e
 
-    # Create 'cities' table from Excel sheet using 'st_read'
+    # Create 'cities' table from Excel sheet using 'read_excel'
     try:
-        df.execute(f"""
+        df.execute(
+            f"""
             CREATE OR REPLACE TABLE cities AS
-            SELECT * FROM st_read(
-                '{excel_file_str}', 
-                layer='MUNICÍPIOS', 
-                open_options=['HEADERS=FORCE']
+            SELECT * FROM read_excel(
+                '{excel_file_str}',
+                sheetname='MUNICÍPIOS',
+                header=true
             )
-        """)
+        """
+        )
         print("Table 'cities' created successfully.")
     except duckdb.CatalogException as e:
         print(f"Error creating 'cities' table: {e}")
