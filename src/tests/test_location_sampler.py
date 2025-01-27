@@ -3,6 +3,7 @@
 import pytest
 
 from src.location_sampler import BrazilianLocationSampler
+from src.time_period import TimePeriod
 
 
 @pytest.fixture
