@@ -6,6 +6,7 @@ from string import ascii_uppercase
 from time import sleep
 
 import requests
+import typer
 
 
 def get_names_by_letter(letter, last_page=None):
@@ -60,12 +61,27 @@ def get_names_by_letter(letter, last_page=None):
         sleep(uniform(0.1, 1))
 
 
-def main():
-    for letter in ascii_uppercase:
+def main(
+    custom_start: str = typer.Option(
+        None,
+        '--start-letter',
+        '-s',
+        help='Start processing from this letter (A-Z)',
+    ),
+):
+    start_idx = 0
+    if custom_start:
+        custom_start = custom_start.upper()
+        if custom_start not in ascii_uppercase:
+            typer.echo(f'Error: Start letter must be A-Z, got {custom_start}')
+            raise typer.Exit(1)
+        start_idx = ascii_uppercase.index(custom_start)
+
+    for letter in ascii_uppercase[start_idx:]:
         print(f'\nProcessing letter {letter}')
         get_names_by_letter(letter)
         sleep(uniform(1, 3))
 
 
 if __name__ == '__main__':
-    main()
+    typer.run(main)
