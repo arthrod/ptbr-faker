@@ -30,16 +30,38 @@ DEFAULT_QTY = typer.Option(1, '--qty', '-q', help='Number of samples to generate
 CITY_ONLY = typer.Option(False, '--city-only', '-c', help='Return only city names')
 STATE_ABBR_ONLY = typer.Option(False, '--state-abbr-only', '-sa', help='Return only state abbreviations')
 STATE_FULL_ONLY = typer.Option(False, '--state-full-only', '-sf', help='Return only full state names')
-JSON_PATH = typer.Option('population_data_2024_with_postalcodes.json', '--json-path', '-j', help='Path to the population data JSON file')
+JSON_PATH = typer.Option(
+    'population_data_2024_with_postalcodes_updated.json', '--json-path', '-j', help='Path to the population data JSON file'
+)
 CEP_WITHOUT_DASH = typer.Option(False, '--cep-without-dash', '-nd', help='Return CEP without dash')
 ONLY_CEP = typer.Option(False, '--only-cep', '-oc', help='Return only CEP')
 TIME_PERIOD = typer.Option(TimePeriod.UNTIL_2010, '--time-period', '-t', help='Time period for name sampling')
 RETURN_ONLY_NAME = typer.Option(False, '--return-only-name', '-n', help='Return only the name without location')
 # Add this with the other options at the top of the file
 NAME_RAW = typer.Option(False, '--name-raw', '-r', help='Return names in raw format (all caps)')
+ONLY_SURNAME = typer.Option(False, '--only-surname', '-s', help='Return only surname')
+TOP_40 = typer.Option(False, '--top-40', '-t40', help='Use only top 40 surnames')
+WITH_ONLY_ONE_SURNAME = typer.Option(False, '--one-surname', '-os', help='Return only one surname instead of two')
 
 
 class BrazilianNameSampler:
+    # Dictionary mapping surnames to their prefixes and weights
+    SURNAME_PREFIXES = {
+        'SANTOS': ('dos', 0.9),
+        'SILVA': ('da', 0.9),
+        'NASCIMENTO': ('do', 0.9),
+        'COSTA': ('da', 0.9),
+        'SOUZA': ('de', 0.8),
+        'SOUSA': ('de', 0.8),
+        'OLIVEIRA': ('de', 0.8),
+        'JESUS': ('de', 0.8),
+        'PEREIRA': ('da', 0.6),
+        'FERREIRA': ('da', 0.6),
+        'LIMA': ('de', 0.6),
+        'CARVALHO': ('de', 0.6),
+        'RIBEIRO': ('do', 0.6),
+    }
+
     def __init__(self, json_file_path: str | Path | dict):
         """
         Initialize the name sampler with population data.
@@ -58,6 +80,11 @@ class BrazilianNameSampler:
             raise ValueError("Missing 'common_names_percentage' data")
 
         self.name_data = data['common_names_percentage']
+        if 'surnames' not in data:
+            raise ValueError("Missing 'surnames' data")
+
+        self.surname_data = data['surnames']
+        self.top_40_surnames = data['surnames'].get('top_40', {})
         self._validate_data()
 
     def _validate_data(self) -> None:
@@ -75,14 +102,72 @@ class BrazilianNameSampler:
             if not {'names', 'total'}.issubset(period_data.keys()):
                 raise ValueError(f"Invalid data structure for period {period.value}. Must contain 'names' and 'total'")
 
-    def get_random_name(self, time_period: TimePeriod = TimePeriod.UNTIL_2010, raw: bool = False) -> str:
+        # Validate surname data structure
+        if not isinstance(self.surname_data, dict):
+            raise ValueError("Invalid 'surnames' data structure")
+
+    def _apply_prefix(self, surname: str) -> str:
         """
-        Get a random name from the specified time period.
+        Apply prefix to surname based on predefined rules and probabilities.
 
         Args:
-            time_period: Historical period to sample from
-            raw: If True, returns name in original format, if False, converts to Title Case
+            surname: The surname to potentially prefix
+
+        Returns:
+            The surname with or without prefix based on probability
         """
+        surname_upper = surname.upper()
+        if surname_upper in self.SURNAME_PREFIXES:
+            prefix, weight = self.SURNAME_PREFIXES[surname_upper]
+            if random.random() < weight:
+                return f'{prefix} {surname}'
+        return surname
+
+    def get_random_surname(self, top_40: bool = False, raw: bool = False, with_only_one_surname: bool = False) -> str:
+        """
+        Get random surname(s), optionally from top 40 only.
+
+        Args:
+            top_40: If True, only select from top 40 surnames
+            raw: If True, returns surname in original format
+            with_only_one_surname: If True, returns only one surname
+
+        Returns:
+            One or two surnames with appropriate prefixes
+        """
+        source = self.top_40_surnames if top_40 else self.surname_data
+        surnames = []
+        weights = []
+
+        for surname, info in source.items():
+            if surname != 'top_40':  # Skip the top_40 nested dictionary
+                surnames.append(surname)
+                weights.append(info['percentage'])
+
+        # Get first surname
+        surname1 = random.choices(surnames, weights=weights, k=1)[0]
+        surname1 = surname1 if raw else surname1.title()
+        surname1 = self._apply_prefix(surname1)
+
+        if with_only_one_surname:
+            return surname1
+
+        # Get second surname
+        surname2 = random.choices(surnames, weights=weights, k=1)[0]
+        surname2 = surname2 if raw else surname2.title()
+        surname2 = self._apply_prefix(surname2)
+
+        return f'{surname1} {surname2}'
+
+    def get_random_name(
+        self,
+        time_period: TimePeriod = TimePeriod.UNTIL_2010,
+        raw: bool = False,
+        include_surname: bool = True,
+        top_40: bool = False,
+        with_only_one_surname: bool = False,
+    ) -> str:
+        """Get a random name from the specified time period."""
         period_data = self.name_data[time_period.value]
         names_data = period_data['names']
 
@@ -93,7 +178,11 @@ class BrazilianNameSampler:
             weights.append(info['percentage'])
 
         name = random.choices(names, weights=weights, k=1)[0]
-        return name if raw else name.title()
+        if not include_surname:
+            return name if raw else name.title()
+
+        surname = self.get_random_surname(top_40, raw, with_only_one_surname)
+        return f'{name if raw else name.title()} {surname}'
 
 
 class BrazilianLocationSampler:
@@ -224,13 +313,14 @@ class BrazilianLocationSampler:
         cep_without_dash: bool = False,
         time_period: TimePeriod = TimePeriod.UNTIL_2010,
         name_raw: bool = False,
+        only_surname: bool = False,
+        top_40: bool = False,
     ) -> str:
-        """
-        Get a random location with optional name.
-        Now properly handles names using a dedicated name sampler instance.
-        """
-        # Create a name sampler instance for this request
+        """Get a random location with optional name/surname."""
         name_sampler = BrazilianNameSampler(self.data)
+
+        if only_surname:
+            return name_sampler.get_random_surname(top_40, raw=name_raw)
 
         if only_cep:
             cep = self._get_random_cep_for_city(self.get_city()[0])
@@ -243,7 +333,7 @@ class BrazilianLocationSampler:
             return self.get_city()[0]
 
         state_name, state_abbr, city_name = self.get_state_and_city()
-        name = name_sampler.get_random_name(time_period, raw=name_raw)
+        name = name_sampler.get_random_name(time_period, raw=name_raw, include_surname=True, top_40=top_40)
         return self.format_full_location(city_name, state_name, state_abbr, True, cep_without_dash, name)
 
 
@@ -294,14 +384,29 @@ def sample(
     return_only_name: bool = RETURN_ONLY_NAME,
     name_raw: bool = NAME_RAW,
     json_path: Path = JSON_PATH,
+    only_surname: bool = ONLY_SURNAME,
+    top_40: bool = TOP_40,
+    with_only_one_surname: bool = WITH_ONLY_ONE_SURNAME,
 ) -> list[str]:
     try:
-        if return_only_name:
-            # Use name sampler for name-only requests
+        if return_only_name or only_surname:
             sampler = BrazilianNameSampler(json_path)
-            results = [sampler.get_random_name(time_period=time_period, raw=name_raw) for _ in range(qty)]
+            if only_surname:
+                results = [
+                    sampler.get_random_surname(top_40=top_40, raw=name_raw, with_only_one_surname=with_only_one_surname) for _ in range(qty)
+                ]
+            else:
+                results = [
+                    sampler.get_random_name(
+                        time_period=time_period,
+                        raw=name_raw,
+                        include_surname=True,
+                        top_40=top_40,
+                        with_only_one_surname=with_only_one_surname,
+                    )
+                    for _ in range(qty)
+                ]
         else:
-            # Use location sampler for everything else
             sampler = BrazilianLocationSampler(json_path)
             results = [
                 sampler.get_random_location(
@@ -312,14 +417,21 @@ def sample(
                     cep_without_dash=cep_without_dash,
                     time_period=time_period,
                     name_raw=name_raw,
+                    only_surname=only_surname,
+                    top_40=top_40,
                 )
                 for _ in range(qty)
             ]
 
         # Set appropriate title and create table
         title = 'Random Brazilian Samples'
-        if return_only_name:
-            title = f'Random Brazilian Names ({time_period.value})'
+        if only_surname:
+            title = f'Random Brazilian Surnames{" (Top 40)" if top_40 else ""}{" (Single)" if with_only_one_surname else ""}'
+        elif return_only_name:
+            title = (
+                f'Random Brazilian Names with {"Single " if with_only_one_surname else ""}Surname'
+                f' ({time_period.value}{"- Top 40" if top_40 else ""})'
+            )
         elif city_only:
             title = 'Random Brazilian City Samples'
         elif state_abbr_only:

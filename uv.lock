@@ -168,6 +168,7 @@ source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
     { name = "ibis-framework", extra = ["duckdb"] },
+    { name = "pytest-cov" },
     { name = "python-dotenv" },
     { name = "rich" },
     { name = "tqdm" },
@@ -196,6 +197,7 @@ requires-dist = [
     { name = "ibis-framework", extras = ["duckdb"] },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=7.0" },
     { name = "pytest-asyncio", marker = "extra == 'test'" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "pytest-mock", marker = "extra == 'test'" },
     { name = "pytest-timeout", marker = "extra == 'test'" },
