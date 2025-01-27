@@ -2,7 +2,7 @@ import json
 import random
 from pathlib import Path
 
-from src.brazilian_name_sampler import BrazilianNameSampler
+from name_sampler import BrazilianNameSampler
 from src.time_period import TimePeriod
 
 
@@ -163,11 +163,13 @@ class BrazilianLocationSampler:
         state_name, state_abbr, city_name = self.get_state_and_city()
         name = name_sampler.get_random_name(time_period, raw=name_raw)
         return self.format_full_location(city_name, state_name, state_abbr, True, cep_without_dash, name, no_parenthesis)
+
+
 import json
 import random
 from pathlib import Path
 
-from src.brazilian_name_sampler import BrazilianNameSampler
+from name_sampler import BrazilianNameSampler
 from src.time_period import TimePeriod
 
 
