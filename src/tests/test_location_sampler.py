@@ -1,7 +1,7 @@
 """Tests for the BrazilianLocationSampler class."""
 import pytest
-from src.location_sampler import BrazilianLocationSampler
-from src.time_period import TimePeriod
+from location_sampler import BrazilianLocationSampler
+from time_period import TimePeriod
 
 @pytest.fixture
 def mock_location_data():

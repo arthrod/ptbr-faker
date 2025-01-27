@@ -1,7 +1,7 @@
 """Tests for the BrazilianNameSampler class."""
 import pytest
-from src.name_sampler import BrazilianNameSampler, SURNAME_PREFIXES
-from src.time_period import TimePeriod
+from name_sampler import BrazilianNameSampler, SURNAME_PREFIXES
+from time_period import TimePeriod
 
 @pytest.fixture
 def mock_data():

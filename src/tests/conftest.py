@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import pytest
 from typing import Dict, Any
+from time_period import TimePeriod
 
 @pytest.fixture
 def test_data_path() -> Path:
