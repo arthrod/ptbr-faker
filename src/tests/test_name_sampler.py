@@ -1,25 +1,86 @@
 """Tests for the BrazilianNameSampler class."""
 import pytest
-from src.name_sampler import BrazilianNameSampler
+from src.name_sampler import BrazilianNameSampler, SURNAME_PREFIXES
 from src.time_period import TimePeriod
 
-def test_name_sampler_initialization(test_data_path):
+@pytest.fixture
+def mock_data():
+    return {
+        "common_names_percentage": {
+            "ate1930": {"names": {"MARIA": {"percentage": 0.5}}, "total": 100},
+            "ate1940": {"names": {"JOSE": {"percentage": 0.5}}, "total": 100},
+            "ate1950": {"names": {"JOAO": {"percentage": 0.5}}, "total": 100},
+            "ate1960": {"names": {"ANA": {"percentage": 0.5}}, "total": 100},
+            "ate1970": {"names": {"ANTONIO": {"percentage": 0.5}}, "total": 100},
+            "ate1980": {"names": {"PEDRO": {"percentage": 0.5}}, "total": 100},
+            "ate1990": {"names": {"PAULO": {"percentage": 0.5}}, "total": 100},
+            "ate2000": {"names": {"LUCAS": {"percentage": 0.5}}, "total": 100},
+            "ate2010": {"names": {"MIGUEL": {"percentage": 0.5}}, "total": 100}
+        },
+        "surnames": {
+            "SILVA": {"percentage": 0.3},
+            "SANTOS": {"percentage": 0.2},
+            "top_40": {
+                "SILVA": {"percentage": 0.5},
+                "SANTOS": {"percentage": 0.5}
+            }
+        }
+    }
+
+def test_name_sampler_initialization(mock_data):
     """Test that sampler initializes correctly with valid data."""
-    sampler = BrazilianNameSampler(test_data_path)
+    sampler = BrazilianNameSampler(mock_data)
     assert sampler.name_data is not None
     assert sampler.surname_data is not None
+    assert sampler.top_40_surnames is not None
 
 def test_name_sampler_invalid_path():
     """Test that sampler raises error with invalid file path."""
     with pytest.raises(FileNotFoundError):
         BrazilianNameSampler('invalid_path.json')
 
-def test_random_name_generation(test_data):
+def test_name_sampler_missing_data():
+    """Test validation of missing data."""
+    with pytest.raises(ValueError, match="Missing 'common_names_percentage' data"):
+        BrazilianNameSampler({})
+    
+    with pytest.raises(ValueError, match="Missing 'surnames' data"):
+        BrazilianNameSampler({"common_names_percentage": {}})
+
+def test_validate_data_structure(mock_data):
+    """Test data structure validation."""
+    sampler = BrazilianNameSampler(mock_data)
+    sampler._validate_data()  # Should not raise
+
+    # Test invalid period data
+    invalid_data = mock_data.copy()
+    invalid_data["common_names_percentage"]["ate1930"] = {}
+    with pytest.raises(ValueError, match="Invalid data structure for period ate1930"):
+        BrazilianNameSampler(invalid_data)
+
+def test_apply_prefix():
+    """Test surname prefix application."""
+    sampler = BrazilianNameSampler({
+        "common_names_percentage": {"ate2010": {"names": {}, "total": 0}},
+        "surnames": {}
+    })
+    
+    # Test with known prefix
+    for surname, (prefix, _) in SURNAME_PREFIXES.items():
+        result = sampler._apply_prefix(surname.title())
+        assert result in [f"{prefix} {surname.title()}", surname.title()]
+
+    # Test with unknown surname
+    result = sampler._apply_prefix("Unknown")
+    assert result == "Unknown"
+
+def test_random_name_generation(mock_data):
     """Test basic name generation."""
-    sampler = BrazilianNameSampler(test_data)
+    sampler = BrazilianNameSampler(mock_data)
     name = sampler.get_random_name()
     assert isinstance(name, str)
     assert len(name) > 0
+    assert name.istitle()  # Should be title case by default
 
 def test_random_name_with_period(test_data):
     """Test name generation for specific time period."""
