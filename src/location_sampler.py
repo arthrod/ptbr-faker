@@ -7,10 +7,13 @@ from src.time_period import TimePeriod
 
 
 class BrazilianLocationSampler:
-    def __init__(self, json_file_path: str | Path) -> None:
-        """Initialize the sampler with population data from a JSON file."""
-        with Path(json_file_path).open(encoding='utf-8') as file:
-            self.data = json.load(file)
+    def __init__(self, json_file_path: str | Path | dict) -> None:
+        """Initialize the sampler with population data from a JSON file or dict."""
+        if isinstance(json_file_path, (str, Path)):
+            with Path(json_file_path).open(encoding='utf-8') as file:
+                self.data = json.load(file)
+        else:
+            self.data = json_file_path
 
         # Ensure we have name data
         if 'common_names_percentage' not in self.data:

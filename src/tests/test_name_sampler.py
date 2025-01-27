@@ -70,7 +70,10 @@ def test_apply_prefix() -> None:
     """Test surname prefix application."""
     sampler = BrazilianNameSampler(
         {
-            'common_names_percentage': {'ate2010': {'names': {}, 'total': 0}},
+            'common_names_percentage': {
+                period.value: {'names': {}, 'total': 0}
+                for period in TimePeriod
+            },
             'surnames': {},
         }
     )

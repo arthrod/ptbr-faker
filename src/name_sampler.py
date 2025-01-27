@@ -37,17 +37,17 @@ class BrazilianNameSampler:
         else:
             data = json_file_path
 
+        # Validate required data sections
         if "common_names_percentage" not in data:
             msg = "Missing 'common_names_percentage' data"
             raise ValueError(msg)
-
-        self.name_data = data["common_names_percentage"]
         if "surnames" not in data:
             msg = "Missing 'surnames' data"
             raise ValueError(msg)
 
+        self.name_data = data["common_names_percentage"]
         self.surname_data = data["surnames"]
-        self.top_40_surnames = data["surnames"].get("top_40", {})
+        self.top_40_surnames = self.surname_data.get("top_40", {})
         self._validate_data()
 
     def _validate_data(self) -> None:

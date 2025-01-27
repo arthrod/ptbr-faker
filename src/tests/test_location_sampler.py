@@ -9,7 +9,8 @@ from src.location_sampler import BrazilianLocationSampler
 def mock_location_data():
     return {
         'common_names_percentage': {
-            'ate2010': {'names': {'TEST': {'percentage': 1.0}}, 'total': 1},
+            period.value: {'names': {'TEST': {'percentage': 1.0}}, 'total': 1}
+            for period in TimePeriod
         },
         'states': {
             'São Paulo': {
