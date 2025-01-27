@@ -1,35 +1,31 @@
-import pandas as pd
+# Read the file and process line by line
+with open('lexicon.csv') as file:
+    lines = file.readlines()
 
-# Read the CSV file with headers
-df = pd.read_csv('lexicon.csv')
+# Process header and data
+header = lines[0].strip()  # First line is header
+data = []
+total = 0
 
-# Get the column names from the first row
-name_col = df.columns[0]
+# Process each data line
+for line in lines[1:]:
+    # Replace tab/spaces with comma and strip whitespace
+    name, qty = line.strip().split('\t')
+    qty = int(qty)
+    total += qty
+    data.append((name, qty))
 
-# If data is in a single column, split it
-if len(df.columns) == 1:
-    # Split the single column into name and number
-    df[['name', 'count']] = df[name_col].str.split('\t', expand=True)
+# Calculate percentages and prepare output lines
+output_lines = [f'{header},percentage\n']  # Add new header
+for name, qty in data:
+    percentage = (qty / total) * 100
+    # Ensure percentage is never zero
+    percentage = max(percentage, 0.0001)
+    output_lines.append(f'{name},{qty},{percentage}\n')
 
-    # Drop the original column
-    df = df.drop(columns=[name_col])
+# Write the processed data to new file
+with open('lexicon_modified.csv', 'w') as file:
+    file.writelines(output_lines)
 
-    # Convert count to numeric
-    df['count'] = pd.to_numeric(df['count'])
-
-    # Calculate total sum
-    total_sum = df['count'].sum()
-
-    # Calculate percentage
-    df['percentage'] = (df['count'] / total_sum) * 100
-
-    # Ensure percentage is never rounded to zero
-    df['percentage'] = df['percentage'].apply(lambda x: max(x, 0.0001))
-
-    # Save to new CSV file
-    df.to_csv('lexicon_modified.csv', index=False)
-
-    print(f'Total sum: {total_sum}')
-    print("File has been processed and saved as 'lexicon_modified.csv'")
-else:
-    print('CSV format is different than expected. Please check the file structure.')
+print(f'Total sum: {total}')
+print("File has been processed and saved as 'lexicon_modified.csv'")
