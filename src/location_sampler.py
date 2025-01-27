@@ -22,8 +22,8 @@ class BrazilianLocationSampler:
     def _calculate_weights(self) -> None:
         """Pre-calculate weights for states and cities based on population percentages."""
         # Calculate state weights
-        self.state_weights = []
-        self.state_names = []
+        self.state_weights: list[float] = []
+        self.state_names: list[str] = []
 
         for state_name, state_data in self.data['states'].items():
             self.state_names.append(state_name)
@@ -34,11 +34,11 @@ class BrazilianLocationSampler:
         self.state_weights = [w / total_weight for w in self.state_weights]
 
         # Calculate city weights per state
-        self.city_weights_by_state = {}
-        self.city_names_by_state = {}
+        self.city_weights_by_state: dict[str, list[float]] = {}
+        self.city_names_by_state: dict[str, list[str]] = {}
 
         for city_name, city_data in self.data['cities'].items():
-            state = city_data['city_uf']
+            state: str = city_data['city_uf']
 
             if state not in self.city_weights_by_state:
                 self.city_weights_by_state[state] = []
@@ -55,8 +55,8 @@ class BrazilianLocationSampler:
 
     def get_state(self) -> tuple[str, str]:
         """Get a random state weighted by population percentage."""
-        state_name = random.choices(self.state_names, weights=self.state_weights, k=1)[0]
-        state_abbr = self.data['states'][state_name]['state_abbr']
+        state_name: str = random.choices(self.state_names, weights=self.state_weights, k=1)[0]
+        state_abbr: str = self.data['states'][state_name]['state_abbr']
         return state_name, state_abbr
 
     def get_city(self, state_abbr: str | None = None) -> tuple[str, str]:
@@ -67,13 +67,16 @@ class BrazilianLocationSampler:
         if state_abbr not in self.city_weights_by_state:
             raise ValueError(f'No cities found for state: {state_abbr}')
 
-        city_name = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
+        city_name: str = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
         return city_name, state_abbr
 
     def get_state_and_city(self) -> tuple[str, str, str]:
         """Get a random state and city combination weighted by population percentage."""
+        state_name: str
+        state_abbr: str
         state_name, state_abbr = self.get_state()
+        city_name: str
         city_name, _ = self.get_city(state_abbr)
         return state_name, state_abbr, city_name
 
@@ -83,7 +86,7 @@ class BrazilianLocationSampler:
 
     def _format_cep(self, cep: int, with_dash: bool = True) -> str:
         """Format CEP integer back to string with optional dash."""
-        cep_str = str(cep).zfill(8)
+        cep_str: str = str(cep).zfill(8)
         return f'{cep_str[:5]}-{cep_str[5:]}' if with_dash else cep_str
 
     def _get_random_cep_for_city(self, city_name: str) -> int:
@@ -116,7 +119,7 @@ class BrazilianLocationSampler:
         no_parenthesis: bool = False,
     ) -> str:
         """Format location with optional CEP and name."""
-        base = f'{city}, {state} {state_abbr if no_parenthesis else f"({state_abbr})"}'
+        base: str = f'{city}, {state} {state_abbr if no_parenthesis else f"({state_abbr})"}'
         if not include_cep and not name:
             return base
 
@@ -148,7 +151,7 @@ class BrazilianLocationSampler:
         Now properly handles names using a dedicated name sampler instance.
         """
         # Create a name sampler instance for this request
-        name_sampler = BrazilianNameSampler(self.data)
+        name_sampler: BrazilianNameSampler = BrazilianNameSampler(self.data)
 
         if only_cep:
             cep = self._get_random_cep_for_city(self.get_city()[0])

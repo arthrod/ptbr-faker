@@ -7,7 +7,7 @@ from src.time_period import TimePeriod
 
 
 class BrazilianNameSampler:
-    def __init__(self, json_file_path: str | Path | dict):
+    def __init__(self, json_file_path: str | Path | dict) -> None:
         """
         Initialize the name sampler with population data.
         Now accepts either a file path or pre-loaded data.
