@@ -2,19 +2,20 @@ import json
 import random
 from pathlib import Path
 
-from name_sampler import BrazilianNameSampler
+from src.name_sampler import BrazilianNameSampler
 from src.time_period import TimePeriod
 
 
 class BrazilianLocationSampler:
-    def __init__(self, json_file_path: str | Path):
+    def __init__(self, json_file_path: str | Path) -> None:
         """Initialize the sampler with population data from a JSON file."""
         with Path(json_file_path).open(encoding='utf-8') as file:
             self.data = json.load(file)
 
         # Ensure we have name data
         if 'common_names_percentage' not in self.data:
-            raise ValueError("Missing 'common_names_percentage' data in JSON file")
+            msg = "Missing 'common_names_percentage' data in JSON file"
+            raise ValueError(msg)
 
         # Pre-calculate weights for more efficient sampling
         self._calculate_weights()
@@ -65,7 +66,8 @@ class BrazilianLocationSampler:
             _, state_abbr = self.get_state()
 
         if state_abbr not in self.city_weights_by_state:
-            raise ValueError(f'No cities found for state: {state_abbr}')
+            msg = f'No cities found for state: {state_abbr}'
+            raise ValueError(msg)
 
         city_name: str = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
@@ -146,8 +148,7 @@ class BrazilianLocationSampler:
         name_raw: bool = False,
         no_parenthesis: bool = False,
     ) -> str:
-        """
-        Get a random location with optional name.
+        """Get a random location with optional name.
         Now properly handles names using a dedicated name sampler instance.
         """
         # Create a name sampler instance for this request
@@ -168,23 +169,21 @@ class BrazilianLocationSampler:
         return self.format_full_location(city_name, state_name, state_abbr, True, cep_without_dash, name, no_parenthesis)
 
 
-import json
-import random
 from pathlib import Path
 
-from name_sampler import BrazilianNameSampler
 from src.time_period import TimePeriod
 
 
 class BrazilianLocationSampler:
-    def __init__(self, json_file_path: str | Path):
+    def __init__(self, json_file_path: str | Path) -> None:
         """Initialize the sampler with population data from a JSON file."""
         with Path(json_file_path).open(encoding='utf-8') as file:
             self.data = json.load(file)
 
         # Ensure we have name data
         if 'common_names_percentage' not in self.data:
-            raise ValueError("Missing 'common_names_percentage' data in JSON file")
+            msg = "Missing 'common_names_percentage' data in JSON file"
+            raise ValueError(msg)
 
         # Pre-calculate weights for more efficient sampling
         self._calculate_weights()
@@ -235,7 +234,8 @@ class BrazilianLocationSampler:
             _, state_abbr = self.get_state()
 
         if state_abbr not in self.city_weights_by_state:
-            raise ValueError(f'No cities found for state: {state_abbr}')
+            msg = f'No cities found for state: {state_abbr}'
+            raise ValueError(msg)
 
         city_name = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
@@ -313,8 +313,7 @@ class BrazilianLocationSampler:
         name_raw: bool = False,
         no_parenthesis: bool = False,
     ) -> str:
-        """
-        Get a random location with optional name.
+        """Get a random location with optional name.
         Now properly handles names using a dedicated name sampler instance.
         """
         # Create a name sampler instance for this request
