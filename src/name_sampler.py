@@ -2,8 +2,26 @@ import json
 import random
 from enum import Enum
 from pathlib import Path
+from typing import Dict, Tuple
 
 from src.time_period import TimePeriod
+
+# Dictionary mapping surnames to their prefixes and weights
+SURNAME_PREFIXES: Dict[str, Tuple[str, float]] = {
+    'SANTOS': ('dos', 0.9),
+    'SILVA': ('da', 0.9),
+    'NASCIMENTO': ('do', 0.9),
+    'COSTA': ('da', 0.9),
+    'SOUZA': ('de', 0.8),
+    'SOUSA': ('de', 0.8),
+    'OLIVEIRA': ('de', 0.8),
+    'JESUS': ('de', 0.8),
+    'PEREIRA': ('da', 0.6),
+    'FERREIRA': ('da', 0.6),
+    'LIMA': ('de', 0.6),
+    'CARVALHO': ('de', 0.6),
+    'RIBEIRO': ('do', 0.6),
+}
 
 
 class BrazilianNameSampler:
@@ -25,6 +43,11 @@ class BrazilianNameSampler:
             raise ValueError("Missing 'common_names_percentage' data")
 
         self.name_data = data['common_names_percentage']
+        if 'surnames' not in data:
+            raise ValueError("Missing 'surnames' data")
+            
+        self.surname_data = data['surnames']
+        self.top_40_surnames = data['surnames'].get('top_40', {})
         self._validate_data()
 
     def _validate_data(self) -> None:
@@ -42,7 +65,67 @@ class BrazilianNameSampler:
             if not {'names', 'total'}.issubset(period_data.keys()):
                 raise ValueError(f"Invalid data structure for period {period.value}. Must contain 'names' and 'total'")
 
-    def get_random_name(self, time_period: TimePeriod = TimePeriod.UNTIL_2010, raw: bool = False) -> str:
+    def _apply_prefix(self, surname: str) -> str:
+        """
+        Apply prefix to surname based on predefined rules and probabilities.
+
+        Args:
+            surname: The surname to potentially prefix
+
+        Returns:
+            The surname with or without prefix based on probability
+        """
+        surname_upper = surname.upper()
+        if surname_upper in SURNAME_PREFIXES:
+            prefix, weight = SURNAME_PREFIXES[surname_upper]
+            if random.random() < weight:
+                return f'{prefix} {surname}'
+        return surname
+
+    def get_random_surname(self, top_40: bool = False, raw: bool = False, with_only_one_surname: bool = False) -> str:
+        """
+        Get random surname(s), optionally from top 40 only.
+
+        Args:
+            top_40: If True, only select from top 40 surnames
+            raw: If True, returns surname in original format
+            with_only_one_surname: If True, returns only one surname
+
+        Returns:
+            One or two surnames with appropriate prefixes
+        """
+        source = self.top_40_surnames if top_40 else self.surname_data
+        surnames = []
+        weights = []
+
+        for surname, info in source.items():
+            if surname != 'top_40':  # Skip the top_40 nested dictionary
+                surnames.append(surname)
+                weights.append(info['percentage'])
+
+        # Get first surname
+        surname1 = random.choices(surnames, weights=weights, k=1)[0]
+        surname1 = surname1 if raw else surname1.title()
+        surname1 = self._apply_prefix(surname1)
+
+        if with_only_one_surname:
+            return surname1
+
+        # Get second surname
+        surname2 = random.choices(surnames, weights=weights, k=1)[0]
+        surname2 = surname2 if raw else surname2.title()
+        surname2 = self._apply_prefix(surname2)
+
+        return f'{surname1} {surname2}'
+
+    def get_random_name(
+        self,
+        time_period: TimePeriod = TimePeriod.UNTIL_2010,
+        raw: bool = False,
+        include_surname: bool = True,
+        top_40: bool = False,
+        with_only_one_surname: bool = False,
+    ) -> str:
         """
         Get a random name from the specified time period.
 
