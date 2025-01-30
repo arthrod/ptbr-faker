@@ -1,0 +1,14 @@
+Your goal is to add the class DocumentSampler to our implementation at 'data/sampler_ptbr.py'. However, differently from the other classes, this one will be a separate file data/document_sampler.py, in the same folder of the script. Add checkboxes to each of the tasks below. 
+Tasks:
+1. Add the following parameters to our typer at sampler_ptbr.py:
+CEI, if the user wants to generate CEIs, defaults to no,
+CNPJ, if the user wants to generate CNPJs, defaults to no,
+CPF, if the user wants to generate CPFs, defaults to yes,
+RG, if the user wants to generate RGs, defaults to yes,
+PIS, if the user wants to generate PIS, defaults to no.
+2. Add the class DocumentSampler to the file data/document_sampler.py.
+3. Based on the utils/cei.py file, add the function generate_cei to the class DocumentSampler.
+4. Based on the utils/cnpj.py file, add the function generate_cnpj to the class DocumentSampler.
+5. Based on the utils/cpf.py file, add the function generate_cpf to the class DocumentSampler.
+6. Based on the utils/pis.py, add the function generate_pis to the class DocumentSampler.
+7. Add a new column on the response table to show the generated documents, it should be called "Documents".
