@@ -98,10 +98,17 @@ class BrazilianNameSampler:
             ValueError: If any required data structure is missing or invalid
         """
         for period in TimePeriod:
+            print(f"Validating period {period.value}")
             if period.value not in self.name_data:
                 raise ValueError(f'Missing data for time period: {period.value}')
 
             period_data = self.name_data[period.value]
+            print(f"Period data type for {period.value}: {type(period_data)}")
+            print(f"Period data value: {period_data}")
+            
+            if not isinstance(period_data, dict):
+                raise ValueError(f"Period data must be a dictionary, got {type(period_data)} for {period.value}")
+                
             if not {'names', 'total'}.issubset(period_data.keys()):
                 raise ValueError(f"Invalid data structure for period {period.value}. Must contain 'names' and 'total'")
 
@@ -138,6 +145,7 @@ class BrazilianNameSampler:
         Returns:
             One or two surnames with appropriate prefixes
         """
+        
         source = self.top_40_surnames if top_40 else self.surname_data
         surnames = []
         weights = []
@@ -171,9 +179,14 @@ class BrazilianNameSampler:
         with_only_one_surname: bool = False,
     ) -> str:
         """Get a random name from the specified time period."""
+        print(f"Time period: {time_period.value}")
+        print(f"Name data type before access: {type(self.name_data)}")
+        print(f"Period data for {time_period.value}: {self.name_data[time_period.value]}")
         period_data = self.name_data[time_period.value]
+        print(f"Period data type: {type(period_data)}")
+        if not isinstance(period_data, dict):
+            raise ValueError(f"Expected period_data to be a dict, got {type(period_data)} with value: {period_data}")
         names_data = period_data['names']
-
         names = []
         weights = []
         for name, info in names_data.items():
