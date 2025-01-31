@@ -9,7 +9,7 @@ def create_population_dict():
     df.execute("INSTALL 'spatial';")
     df.execute("LOAD 'spatial';")
 
-    excel_file_path = Path('estimativa_dou_2024.xlsx').resolve()
+    excel_file_path = Path('estimativa_dou_2024.xlsx')
     excel_file_str = str(excel_file_path)
 
     # Create states table - note we use the long column name from our test results
@@ -145,7 +145,7 @@ def create_population_dict():
             }
 
     # Save to JSON with proper encoding
-    with Path('population_data_2024.json').open('w', encoding='utf-8') as f:
+    with Path('population_data_2024_review.json').open('w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
     return result

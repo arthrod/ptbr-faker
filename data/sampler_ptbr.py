@@ -76,10 +76,13 @@ class BrazilianNameSampler:
         else:
             data = json_file_path
 
+        print(f"Loaded data type: {type(data)}")
         if 'common_names_percentage' not in data:
             raise ValueError("Missing 'common_names_percentage' data")
 
         self.name_data = data['common_names_percentage']
+        print(f"Name data type: {type(self.name_data)}")
+        print(f"Name data keys: {list(self.name_data.keys()) if isinstance(self.name_data, dict) else 'Not a dict'}")
         if 'surnames' not in data:
             raise ValueError("Missing 'surnames' data")
 
