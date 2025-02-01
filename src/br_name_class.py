@@ -108,22 +108,11 @@ class BrazilianNameSampler:
         raw: bool = False,
         include_surname: bool = True,
         top_40: bool = False,
-        with_only_one_surname: bool = False,
+        with_only_one_surname: bool = False,  # This parameter needs to be explicitly handled
         always_middle: bool = False,
         only_middle: bool = False,
     ) -> str:
-        """
-        Get a random name from the specified time period.
-
-        Args:
-            time_period: The time period to sample from
-            raw: If True, return name in original format (uppercase)
-            include_surname: Whether to include surname
-            top_40: If True, only select from top 40 surnames
-            with_only_one_surname: If True, return only one surname
-            always_middle: Always include a middle name
-            only_middle: Return only middle name
-        """
+        """Get a random name from the specified time period."""
         if only_middle:
             middle_name = self._get_random_middle_name()
             return middle_name if raw else middle_name.title()
@@ -147,7 +136,8 @@ class BrazilianNameSampler:
         if not include_surname:
             return name if raw else name.title()
 
-        surname = self.get_random_surname(top_40, raw, with_only_one_surname)
+        # Explicitly pass with_only_one_surname to get_random_surname
+        surname = self.get_random_surname(top_40=top_40, raw=raw, with_only_one_surname=with_only_one_surname)
         return f'{name if raw else name.title()} {surname}'
 
     def _validate_data(self) -> None:
