@@ -6,8 +6,7 @@ from pathlib import Path
 from random import uniform
 from string import ascii_uppercase
 from time import sleep
-
-import requests
+from security import safe_requests
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,7 +45,7 @@ class NameCollector:
         page = 1
         while True:
             params['pagina'] = page
-            response = requests.get(self.base_url, params=params, headers=headers)
+            response = safe_requests.get(self.base_url, params=params, headers=headers)
 
             if response.status_code == 403:
                 logging.error(f'Authentication error for prefix {prefix}. Need new tokens!')
@@ -100,7 +99,7 @@ def main():
     for prefix in prefixes_3:
         logging.info(f'Processing prefix: {prefix}')
 
-        response = requests.get(
+        response = safe_requests.get(
             collector.base_url, params={'termo': prefix, 'pagina': 1, 'tamanhoPagina': 1, **tokens}, headers={'User-Agent': 'Mozilla/5.0'}
         )
 
