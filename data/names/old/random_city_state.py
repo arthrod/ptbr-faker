@@ -1,11 +1,11 @@
 # make sure you implement exception for São Paulo, Brasília e Nova Iguaçu
 import json
-import random
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.table import Table
+import secrets
 
 app = typer.Typer(help='Brazilian Population Sampler CLI')
 console = Console()
@@ -71,7 +71,7 @@ class BrazilianPopulationSampler:
 
     def get_state(self) -> tuple[str, str]:
         """Get a random state weighted by population percentage."""
-        state_name = random.choices(self.state_names, weights=self.state_weights, k=1)[0]
+        state_name = secrets.SystemRandom().choices(self.state_names, weights=self.state_weights, k=1)[0]
         state_abbr = self.data['states'][state_name]['state_abbr']
         return state_name, state_abbr
 
@@ -83,7 +83,7 @@ class BrazilianPopulationSampler:
         if state_abbr not in self.city_weights_by_state:
             raise ValueError(f'No cities found for state: {state_abbr}')
 
-        city_name = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
+        city_name = secrets.SystemRandom().choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
         return city_name, state_abbr
 

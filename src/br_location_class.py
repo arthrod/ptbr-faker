@@ -1,8 +1,8 @@
 import json
-import random
 from pathlib import Path
 
 from src.br_name_class import BrazilianNameSampler, TimePeriod
+import secrets
 
 
 class BrazilianLocationSampler:
@@ -71,7 +71,7 @@ class BrazilianLocationSampler:
         Returns:
             Tuple of (state_name, state_abbreviation)
         """
-        state_name = random.choices(self.state_names, weights=self.state_weights, k=1)[0]
+        state_name = secrets.SystemRandom().choices(self.state_names, weights=self.state_weights, k=1)[0]
         state_abbr = self.data['states'][state_name]['state_abbr']
         return state_name, state_abbr
 
@@ -93,7 +93,7 @@ class BrazilianLocationSampler:
         if state_abbr not in self.city_weights_by_state:
             raise ValueError(f'No cities found for state: {state_abbr}')
 
-        city_name = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
+        city_name = secrets.SystemRandom().choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
         return city_name, state_abbr
 
@@ -145,7 +145,7 @@ class BrazilianLocationSampler:
         # Handle special cases with two ranges
         if city_name in ['São Paulo', 'Nova Iguaçu', 'Brasília']:
             # Randomly choose between the two ranges
-            if random.random() < 0.5:
+            if secrets.SystemRandom().random() < 0.5:
                 start = self._normalize_cep(city_data['cep_starts'])
                 end = self._normalize_cep(city_data['cep_ends'])
             else:
@@ -155,7 +155,7 @@ class BrazilianLocationSampler:
             start = self._normalize_cep(city_data['cep_starts'])
             end = self._normalize_cep(city_data['cep_ends'])
 
-        return random.randint(start, end)
+        return secrets.SystemRandom().randint(start, end)
 
     def format_full_location(
         self, city: str, state: str, state_abbr: str, include_cep: bool = True, cep_without_dash: bool = False, name: str | None = None

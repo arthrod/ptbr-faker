@@ -1,4 +1,5 @@
 import marimo
+import secrets
 
 __generated_with = '0.10.15'
 app = marimo.App()
@@ -95,7 +96,7 @@ def _():
             print(json.dumps(data, indent=2))
         else:
             print(f'{state}: Error {response.status_code}')
-        time.sleep(randint(1, 3))
+        time.sleep(secrets.SystemRandom().randint(1, 3))
 
     for state in ESTADOS:
         get_state_data(state)

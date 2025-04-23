@@ -1,11 +1,11 @@
 import json
-import random
 from enum import Enum
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.table import Table
+import secrets
 
 app = typer.Typer(help='Brazilian Location and Name Sampler CLI')
 console = Console()
@@ -129,7 +129,7 @@ class BrazilianNameSampler:
         surname_upper = surname.upper()
         if surname_upper in self.SURNAME_PREFIXES:
             prefix, weight = self.SURNAME_PREFIXES[surname_upper]
-            if random.random() < weight:
+            if secrets.SystemRandom().random() < weight:
                 return f'{prefix} {surname}'
         return surname
 
@@ -156,7 +156,7 @@ class BrazilianNameSampler:
                 weights.append(info['percentage'])
 
         # Get first surname
-        surname1 = random.choices(surnames, weights=weights, k=1)[0]
+        surname1 = secrets.SystemRandom().choices(surnames, weights=weights, k=1)[0]
         surname1 = surname1 if raw else surname1.title()
         surname1 = self._apply_prefix(surname1)
 
@@ -164,7 +164,7 @@ class BrazilianNameSampler:
             return surname1
 
         # Get second surname
-        surname2 = random.choices(surnames, weights=weights, k=1)[0]
+        surname2 = secrets.SystemRandom().choices(surnames, weights=weights, k=1)[0]
         surname2 = surname2 if raw else surname2.title()
         surname2 = self._apply_prefix(surname2)
 
@@ -193,7 +193,7 @@ class BrazilianNameSampler:
             names.append(name)
             weights.append(info['percentage'])
 
-        name = random.choices(names, weights=weights, k=1)[0]
+        name = secrets.SystemRandom().choices(names, weights=weights, k=1)[0]
         if not include_surname:
             return name if raw else name.title()
 
@@ -250,7 +250,7 @@ class BrazilianLocationSampler:
 
     def get_state(self) -> tuple[str, str]:
         """Get a random state weighted by population percentage."""
-        state_name = random.choices(self.state_names, weights=self.state_weights, k=1)[0]
+        state_name = secrets.SystemRandom().choices(self.state_names, weights=self.state_weights, k=1)[0]
         state_abbr = self.data['states'][state_name]['state_abbr']
         return state_name, state_abbr
 
@@ -262,7 +262,7 @@ class BrazilianLocationSampler:
         if state_abbr not in self.city_weights_by_state:
             raise ValueError(f'No cities found for state: {state_abbr}')
 
-        city_name = random.choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
+        city_name = secrets.SystemRandom().choices(self.city_names_by_state[state_abbr], weights=self.city_weights_by_state[state_abbr], k=1)[0]
 
         return city_name, state_abbr
 
@@ -288,7 +288,7 @@ class BrazilianLocationSampler:
         # Handle special cases with two ranges
         if city_name in ['São Paulo', 'Nova Iguaçu', 'Brasília']:
             # Randomly choose between the two ranges
-            if random.random() < 0.5:
+            if secrets.SystemRandom().random() < 0.5:
                 start = self._normalize_cep(city_data['cep_starts'])
                 end = self._normalize_cep(city_data['cep_ends'])
             else:
@@ -298,7 +298,7 @@ class BrazilianLocationSampler:
             start = self._normalize_cep(city_data['cep_starts'])
             end = self._normalize_cep(city_data['cep_ends'])
 
-        return random.randint(start, end)
+        return secrets.SystemRandom().randint(start, end)
 
     def format_full_location(
         self, city: str, state: str, state_abbr: str, include_cep: bool = True, cep_without_dash: bool = False, name: str | None = None

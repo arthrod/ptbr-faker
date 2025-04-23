@@ -3,9 +3,9 @@
 from __future__ import absolute_import
 
 import re
-import random
 
 from .util import clean_id, pad_id
+import secrets
 
 """
 Functions for working with Brazilian CPF identifiers.
@@ -75,7 +75,7 @@ def pad_cpf(cpf, validate=False):
 
 def random_cpf(formatted=True):
     """Create a random, valid CPF identifier."""
-    stem = random.randint(100000000, 999999999)
+    stem = secrets.SystemRandom().randint(100000000, 999999999)
     cpf = str(stem) + '{0}{1}'.format(*cpf_check_digits(stem))
     if formatted:
         return format_cpf(cpf)

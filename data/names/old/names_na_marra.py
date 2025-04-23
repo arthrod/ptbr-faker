@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from random import uniform
 from string import ascii_uppercase
 from time import sleep
 
 import requests
 import typer
+import secrets
 
 
 def get_names_by_letter(letter, last_page=None):
@@ -58,7 +58,7 @@ def get_names_by_letter(letter, last_page=None):
             break
 
         page += 1
-        sleep(uniform(0.1, 1))
+        sleep(secrets.SystemRandom().uniform(0.1, 1))
 
 
 def main(
@@ -80,7 +80,7 @@ def main(
     for letter in ascii_uppercase[start_idx:]:
         print(f'\nProcessing letter {letter}')
         get_names_by_letter(letter)
-        sleep(uniform(1, 3))
+        sleep(secrets.SystemRandom().uniform(1, 3))
 
 
 if __name__ == '__main__':

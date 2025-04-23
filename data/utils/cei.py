@@ -3,9 +3,9 @@
 from __future__ import absolute_import
 
 import re
-import random
 
 from .util import clean_id, pad_id
+import secrets
 
 """
 Functions for working with Brazilian CEI identifiers.
@@ -62,8 +62,8 @@ def pad_cei(cei, validate=False):
 
 def random_cei(formatted=True):
     """Create a random, valid CEI identifier."""
-    uf = random.randint(11, 53)
-    stem = '{0}{1}'.format(uf, random.randint(100000000, 999999999))
+    uf = secrets.SystemRandom().randint(11, 53)
+    stem = '{0}{1}'.format(uf, secrets.SystemRandom().randint(100000000, 999999999))
     cei = '{0}{1}'.format(stem, cei_check_digit(stem))
     if formatted:
         return format_cei(cei)

@@ -1,6 +1,6 @@
 """Brazilian document number generator."""
-import random
 from typing import List
+import secrets
 
 
 class DocumentSampler:
@@ -18,7 +18,7 @@ class DocumentSampler:
 
     def generate_cei(self) -> str:
         """Generate a valid CEI number."""
-        base = [random.randint(0, 9) for _ in range(10)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(10)]
         
         # Calculate first verifier digit
         weights = [7, 4, 1, 8, 5, 2, 1, 6, 3, 7]
@@ -34,7 +34,7 @@ class DocumentSampler:
     def generate_cnpj(self) -> str:
         """Generate a valid CNPJ number."""
         # Generate first 12 digits
-        base = [random.randint(0, 9) for _ in range(12)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(12)]
         
         # Calculate first verifier digit
         weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -51,7 +51,7 @@ class DocumentSampler:
     def generate_cpf(self) -> str:
         """Generate a valid CPF number."""
         # Generate first 9 digits
-        base = [random.randint(0, 9) for _ in range(9)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(9)]
         
         # Calculate first verifier digit
         weights = [10, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -68,7 +68,7 @@ class DocumentSampler:
     def generate_rg(self) -> str:
         """Generate a valid RG number."""
         # Generate 8 random digits
-        base = [random.randint(0, 9) for _ in range(8)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(8)]
         
         # Calculate verifier digit
         weights = [2, 3, 4, 5, 6, 7, 8, 9]
@@ -81,7 +81,7 @@ class DocumentSampler:
     def generate_pis(self) -> str:
         """Generate a valid PIS number."""
         # Generate first 10 digits
-        base = [random.randint(0, 9) for _ in range(10)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(10)]
         
         # Calculate verifier digit
         weights = [3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -90,7 +90,6 @@ class DocumentSampler:
         
         return ''.join(map(str, base))
 """Brazilian document number generator."""
-import random
 from typing import List
 
 
@@ -109,7 +108,7 @@ class DocumentSampler:
 
     def generate_cei(self) -> str:
         """Generate a valid CEI number."""
-        base = [random.randint(0, 9) for _ in range(10)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(10)]
         
         # Calculate first verifier digit
         weights = [7, 4, 1, 8, 5, 2, 1, 6, 3, 7]
@@ -125,7 +124,7 @@ class DocumentSampler:
     def generate_cnpj(self) -> str:
         """Generate a valid CNPJ number."""
         # Generate first 12 digits
-        base = [random.randint(0, 9) for _ in range(12)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(12)]
         
         # Calculate first verifier digit
         weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -142,7 +141,7 @@ class DocumentSampler:
     def generate_cpf(self) -> str:
         """Generate a valid CPF number."""
         # Generate first 9 digits
-        base = [random.randint(0, 9) for _ in range(9)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(9)]
         
         # Calculate first verifier digit
         weights = [10, 9, 8, 7, 6, 5, 4, 3, 2]
@@ -159,7 +158,7 @@ class DocumentSampler:
     def generate_rg(self) -> str:
         """Generate a valid RG number."""
         # Generate 8 random digits
-        base = [random.randint(0, 9) for _ in range(8)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(8)]
         
         # Calculate verifier digit
         weights = [2, 3, 4, 5, 6, 7, 8, 9]
@@ -172,7 +171,7 @@ class DocumentSampler:
     def generate_pis(self) -> str:
         """Generate a valid PIS number."""
         # Generate first 10 digits
-        base = [random.randint(0, 9) for _ in range(10)]
+        base = [secrets.SystemRandom().randint(0, 9) for _ in range(10)]
         
         # Calculate verifier digit
         weights = [3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
