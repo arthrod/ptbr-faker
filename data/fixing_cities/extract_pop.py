@@ -118,7 +118,7 @@ def create_population_dict():
         if state in state_mapping:
             # Get count of cities for this state
             state_abbr = state_mapping[state]
-            cities_count = df.execute(f"SELECT COUNT(*) FROM cities WHERE state_abbr = '{state_abbr}'").fetchone()[0]
+            cities_count = df.execute("SELECT COUNT(*) FROM cities WHERE state_abbr = ?", (state_abbr, )).fetchone()[0]
 
             result['states'][state] = {
                 'state_abbr': state_abbr,
