@@ -53,7 +53,7 @@ def download_state_part(state_abbrev: str, part: int, output_dir: str) -> bool:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, allow_redirects=True, headers=headers)
+        response = requests.get(url, allow_redirects=True, headers=headers, timeout=60)
         print(f"URL: {url}")
         print(f"Status Code: {response.status_code}")
         print(f"Headers: {dict(response.headers)}")

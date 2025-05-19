@@ -46,7 +46,7 @@ class NameCollector:
         page = 1
         while True:
             params['pagina'] = page
-            response = requests.get(self.base_url, params=params, headers=headers)
+            response = requests.get(self.base_url, params=params, headers=headers, timeout=60)
 
             if response.status_code == 403:
                 logging.error(f'Authentication error for prefix {prefix}. Need new tokens!')
@@ -101,8 +101,8 @@ def main():
         logging.info(f'Processing prefix: {prefix}')
 
         response = requests.get(
-            collector.base_url, params={'termo': prefix, 'pagina': 1, 'tamanhoPagina': 1, **tokens}, headers={'User-Agent': 'Mozilla/5.0'}
-        )
+            collector.base_url, params={'termo': prefix, 'pagina': 1, 'tamanhoPagina': 1, **tokens}, headers={'User-Agent': 'Mozilla/5.0'}, 
+        timeout=60)
 
         if response.status_code == 403:
             logging.error('Authentication error! Need new tokens!')

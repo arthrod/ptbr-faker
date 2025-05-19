@@ -38,5 +38,5 @@ def get_new_token():
 t_token, recaptcha = get_new_token()
 if t_token and recaptcha:
     params = {'letraInicial': 'A', 'pagina': 1, 'tamanhoPagina': 100, 't': t_token, 'tokenRecaptcha': recaptcha}
-    response = requests.get('https://portaldatransparencia.gov.br/pessoa-fisica/busca/resultado', params=params)
+    response = requests.get('https://portaldatransparencia.gov.br/pessoa-fisica/busca/resultado', params=params, timeout=60)
     print(json.dumps(response.json(), indent=2))
