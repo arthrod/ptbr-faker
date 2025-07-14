@@ -4,9 +4,8 @@ from pathlib import Path
 from random import uniform
 from string import ascii_uppercase
 from time import sleep
-
-import requests
 import typer
+from security import safe_requests
 
 
 def get_names_by_letter(letter, last_page=None):
@@ -34,7 +33,7 @@ def get_names_by_letter(letter, last_page=None):
             break
 
         params['pagina'] = page
-        response = requests.get(base_url, params=params, headers=headers, timeout=30)
+        response = safe_requests.get(base_url, params=params, headers=headers, timeout=30)
 
         if response.status_code != 200:
             print(f'Error on letter {letter} page {page}: {response.status_code}')

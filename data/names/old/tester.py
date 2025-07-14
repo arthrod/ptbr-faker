@@ -1,4 +1,5 @@
 import marimo
+from security import safe_requests
 
 __generated_with = '0.10.15'
 app = marimo.App()
@@ -88,7 +89,7 @@ def _():
     def get_state_data(state):
         url = f'https://transparencia.registrocivil.org.br/api/record/all-name?start_date=2010-01-01&end_date=2010-12-31&translate=1&state={state}'
 
-        response = requests.get(url, headers=HEADERS)
+        response = safe_requests.get(url, headers=HEADERS)
         if response.status_code == 200:
             data = response.json()
             print(f'\n=== {state} ===')
