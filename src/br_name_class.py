@@ -1,8 +1,8 @@
 import json
-import random
 from enum import Enum
 from pathlib import Path
 from typing import Any
+import secrets
 
 
 class TimePeriod(str, Enum):
@@ -76,7 +76,7 @@ class BrazilianNameSampler:
         """Determine if a middle name should be added based on statistical data."""
         if not self.middle_names_data:
             return False
-        return random.random() < (self.middle_names_data['percentage_with_second'] / 100)
+        return secrets.SystemRandom().random() < (self.middle_names_data['percentage_with_second'] / 100)
 
     def _get_random_middle_name(self) -> str:
         """Get a random middle name based on frequency weights."""
@@ -97,7 +97,7 @@ class BrazilianNameSampler:
             if not names or total_weight <= 0:
                 return ''
 
-            return random.choices(names, weights=weights, k=1)[0]
+            return secrets.SystemRandom().choices(names, weights=weights, k=1)[0]
 
         except (KeyError, ValueError, TypeError) as err:
             raise ValueError(f'Error processing middle names data: {err}') from err
@@ -126,7 +126,7 @@ class BrazilianNameSampler:
             names.append(name)
             weights.append(info['percentage'])
 
-        name = random.choices(names, weights=weights, k=1)[0]
+        name = secrets.SystemRandom().choices(names, weights=weights, k=1)[0]
 
         # Handle middle name
         if always_middle or self._should_add_middle_name():
@@ -199,7 +199,7 @@ class BrazilianNameSampler:
         if surname_upper in self.SURNAME_PREFIXES:
             # Handle compound surname patterns first
             if surname_upper in ['SANTOS', 'SILVA']:
-                compound_chance = random.random()
+                compound_chance = secrets.SystemRandom().random()
                 compound_prefix = None  # Using a different variable name to avoid shadowing
 
                 if compound_chance < 0.05:  # 5% chance for compound with "e"
@@ -207,13 +207,13 @@ class BrazilianNameSampler:
                     return f'{surname} {compound_prefix}'
 
                 if compound_chance < 0.15:  # Additional 10% chance for compound with "da/do"
-                    compound_prefix = ('DA' if random.random() < 0.7 else 'DO') if is_raw else ('da' if random.random() < 0.7 else 'do')
+                    compound_prefix = ('DA' if secrets.SystemRandom().random() < 0.7 else 'DO') if is_raw else ('da' if secrets.SystemRandom().random() < 0.7 else 'do')
                     return f'{surname} {compound_prefix}'
 
             # Regular prefix handling with multiple options
             prefix_options = self.SURNAME_PREFIXES[surname_upper]
             total_weight = sum(weight for _, weight in prefix_options)
-            rand = random.random() * total_weight
+            rand = secrets.SystemRandom().random() * total_weight
 
             cumulative = 0
             for candidate_prefix, weight in prefix_options:  # Renamed loop variable to avoid shadowing
@@ -222,9 +222,9 @@ class BrazilianNameSampler:
                     final_prefix = candidate_prefix  # Store the selected prefix in a new variable
 
                     # Handle special cases for the selected prefix
-                    if final_prefix in ['da', 'do'] and random.random() < 0.08:
+                    if final_prefix in ['da', 'do'] and secrets.SystemRandom().random() < 0.08:
                         final_prefix = ('DOS' if final_prefix == 'do' else 'DAS') if is_raw else ('dos' if final_prefix == 'do' else 'das')
-                    elif final_prefix == 'de' and surname[0].lower() in 'aeiou' and random.random() < 0.7:
+                    elif final_prefix == 'de' and surname[0].lower() in 'aeiou' and secrets.SystemRandom().random() < 0.7:
                         final_prefix = "D'" if is_raw else "d'"
                     else:
                         final_prefix = final_prefix.upper() if is_raw else final_prefix
@@ -255,7 +255,7 @@ class BrazilianNameSampler:
                 weights.append(info['percentage'])
 
         # Get first surname
-        surname1 = random.choices(surnames, weights=weights, k=1)[0]
+        surname1 = secrets.SystemRandom().choices(surnames, weights=weights, k=1)[0]
         surname1 = surname1 if raw else surname1.title()
         surname1 = self._apply_prefix(surname1)
 
@@ -263,7 +263,7 @@ class BrazilianNameSampler:
             return surname1
 
         # Get second surname
-        surname2 = random.choices(surnames, weights=weights, k=1)[0]
+        surname2 = secrets.SystemRandom().choices(surnames, weights=weights, k=1)[0]
         surname2 = surname2 if raw else surname2.title()
         surname2 = self._apply_prefix(surname2)
 

@@ -6,10 +6,10 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from random import randint
 from zoneinfo import ZoneInfo  # Modern timezone handling
 
 import requests
+import secrets
 
 # Configure logging with timezone-aware timestamps
 logging_filename = Path(f'name_collection_{datetime.now(tz=ZoneInfo("UTC")).strftime("%Y%m%d_%H%M%S")}.log')
@@ -82,13 +82,13 @@ class NameDataCollector:
         for attempt, delay in enumerate(retry_delays[:max_retries]):
             try:
                 url = f'{BASE_URL}?start_date={year}-01-01&end_date={year}-12-31&translate=1&state={state}'
-                time.sleep(randint(0, 15))
+                time.sleep(secrets.SystemRandom().randint(0, 15))
 
                 response = self.session.get(url, timeout=30)
 
                 if response.status_code == 403:
                     logging.error(f'Access forbidden for {state}-{year}. Response: {response.text}')
-                    time.sleep(randint(30, 60))
+                    time.sleep(secrets.SystemRandom().randint(30, 60))
                     continue
 
                 response.raise_for_status()
@@ -104,7 +104,7 @@ class NameDataCollector:
                 logging.exception(f'JSON decode error for {state}-{year}: {e!s}')
 
             if attempt < max_retries - 1:
-                wait_time = delay + randint(0, 5)
+                wait_time = delay + secrets.SystemRandom().randint(0, 5)
                 logging.info(f'Waiting {wait_time} seconds before retry...')
                 time.sleep(wait_time)
 
@@ -201,7 +201,7 @@ class NameDataCollector:
                     response = self.make_api_request(year, state)
                     self.process_response(response, year, state)
 
-                    delay = randint(2, 5)
+                    delay = secrets.SystemRandom().randint(2, 5)
                     logging.debug(f'Waiting {delay} seconds before next request...')
                     time.sleep(delay)
 

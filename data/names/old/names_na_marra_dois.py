@@ -3,11 +3,11 @@ import logging
 from datetime import datetime
 from itertools import product
 from pathlib import Path
-from random import uniform
 from string import ascii_uppercase
 from time import sleep
 
 import requests
+import secrets
 
 logging.basicConfig(
     level=logging.INFO,
@@ -76,7 +76,7 @@ class NameCollector:
                 break
 
             page += 1
-            sleep(uniform(0.1, 1))
+            sleep(secrets.SystemRandom().uniform(0.1, 1))
 
         self.save_batch()  # Save any remaining records
         return True
@@ -117,7 +117,7 @@ def main():
         if not collector.get_names(prefix):
             return
 
-        sleep(uniform(0.1, 1))
+        sleep(secrets.SystemRandom().uniform(0.1, 1))
 
     # Process 4-letter prefixes for large blocks
     for prefix in large_prefixes:
@@ -128,7 +128,7 @@ def main():
             if not collector.get_names(extended_prefix):
                 return
 
-            sleep(uniform(0.1, 1))
+            sleep(secrets.SystemRandom().uniform(0.1, 1))
 
 
 if __name__ == '__main__':
